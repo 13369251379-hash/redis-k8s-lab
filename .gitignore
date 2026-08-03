@@ -1,0 +1,6 @@
+# 解压出的 helm chart (tgz 才是源, 避免仓库膨胀)
+kube-prometheus-stack/
+
+# 临时文件
+*.tmp
+*.log

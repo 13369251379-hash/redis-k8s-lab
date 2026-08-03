@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: redis-ha
+spec:
+  serviceName: redis-headless
+  replicas: 3               # 1 Master + 2 Slaves
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      # Init Container: 根据 Pod 序号生成配置
+      # redis-0 → Master（无 replicaof）
+      # redis-1, redis-2 → Slave（replicaof redis-0）
+      initContainers:
+      - name: init-redis
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - "-c"
+        - |
+          set -ex
+          # 获取 Pod 序号
+          ordinal=${HOSTNAME##*-}
+
+          # 复制基础配置
+          cp /mnt/config/redis.conf /mnt/pod-config/redis.conf
+
+          # 设置密码
+          echo "requirepass ${REDIS_PASSWORD}" >> /mnt/pod-config/redis.conf
+          echo "masterauth ${REDIS_PASSWORD}" >> /mnt/pod-config/redis.conf
+
+          if [ "$ordinal" != "0" ]; then
+            # 非 0 节点：配置为主节点的从
+            echo "replicaof redis-0.redis-headless.redis-ha.svc.cluster.local 6379" >> /mnt/pod-config/redis.conf
+            echo "Configured as slave of redis-0"
+          else
+            echo "Configured as master"
+          fi
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: redis-password
+        volumeMounts:
+        - name: pod-config
+          mountPath: /mnt/pod-config
+        - name: redis-config
+          mountPath: /mnt/config
+
+      # 主容器：Redis
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+          name: redis
+        command:
+        - redis-server
+        - /mnt/pod-config/redis.conf
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: pod-config
+          mountPath: /mnt/pod-config
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -a
+            - "$(REDIS_PASSWORD)"
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -a
+            - "$(REDIS_PASSWORD)"
+            - ping
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: redis-password
+
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
+          items:
+          - key: redis.conf
+            path: redis.conf
+      - name: pod-config
+        emptyDir: {}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 5Gi

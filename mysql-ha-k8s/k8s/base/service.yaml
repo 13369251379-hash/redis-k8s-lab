@@ -1,0 +1,55 @@
+---
+# Headless Service —— 为 StatefulSet 提供稳定 DNS 标识
+# redis-0.redis-headless.redis-ha.svc.cluster.local
+# redis-1.redis-headless.redis-ha.svc.cluster.local
+# redis-2.redis-headless.redis-ha.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: redis-ha
+  labels:
+    app: redis
+spec:
+  ports:
+  - port: 6379
+    name: redis
+  clusterIP: None          # Headless 标志
+  selector:
+    app: redis
+
+---
+# Redis Service —— 用于外部访问（NodePort）
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: redis-ha
+  labels:
+    app: redis
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+    nodePort: 30379        # NodePort，通过 localhost:30379 访问
+    name: redis
+  type: NodePort
+  selector:
+    app: redis
+
+---
+# Sentinel Service —— Sentinel 之间通信
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-service
+  namespace: redis-ha
+  labels:
+    app: sentinel
+spec:
+  ports:
+  - port: 26379
+    targetPort: 26379
+    name: sentinel
+  selector:
+    app: sentinel

@@ -1,0 +1,18 @@
+# kube-prometheus-stack 部署配置 (Docker Desktop K8s 适配)
+# 用法: helm install kube-prom-stack ./kube-prometheus-stack -n monitoring --create-namespace -f monitoring-values.yaml
+
+# Prometheus 配置
+prometheus:
+  prometheusSpec:
+    # 允许发现所有 ServiceMonitor (包括 redis-exporter 的 release: kube-prom-stack)
+    serviceMonitorSelectorNilUsesHelmValues: false
+  service:
+    type: NodePort
+    nodePort: 30090
+
+# Grafana 配置
+grafana:
+  service:
+    type: NodePort
+    nodePort: 30300
+  adminPassword: "123456"

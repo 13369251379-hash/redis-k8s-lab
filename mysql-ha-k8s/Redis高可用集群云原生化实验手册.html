@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Redis 高可用集群云原生化实验手册</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Redis 高可用集群云原生化实验手册</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#redis-高可用集群云原生化实验手册" id="toc-redis-高可用集群云原生化实验手册">Redis
+高可用集群云原生化实验手册</a>
+<ul>
+<li><a href="#docker-desktop-k8s-适配版" id="toc-docker-desktop-k8s-适配版">（Docker Desktop K8s
+适配版）</a></li>
+</ul></li>
+<li><a href="#目录" id="toc-目录">目录</a></li>
+<li><a href="#实验概述" id="toc-实验概述">1. 实验概述</a>
+<ul>
+<li><a href="#实验目标" id="toc-实验目标">1.1 实验目标</a></li>
+<li><a href="#实验架构" id="toc-实验架构">1.2 实验架构</a></li>
+<li><a href="#前置知识" id="toc-前置知识">1.3 前置知识</a></li>
+<li><a href="#实验时长" id="toc-实验时长">1.4 实验时长</a></li>
+</ul></li>
+<li><a href="#环境准备" id="toc-环境准备">2. 环境准备</a>
+<ul>
+<li><a href="#环境检查" id="toc-环境检查">2.1 环境检查</a></li>
+<li><a href="#docker-desktop-资源配置" id="toc-docker-desktop-资源配置">2.2 Docker Desktop 资源配置</a></li>
+<li><a href="#wsl2-环境说明" id="toc-wsl2-环境说明">2.3 WSL2
+环境说明</a></li>
+<li><a href="#创建工作目录" id="toc-创建工作目录">2.4
+创建工作目录</a></li>
+</ul></li>
+<li><a href="#k8s-基础操作演练" id="toc-k8s-基础操作演练">3. K8s
+基础操作演练</a>
+<ul>
+<li><a href="#namespace-管理" id="toc-namespace-管理">3.1 Namespace
+管理</a></li>
+<li><a href="#pod-与-service-操作" id="toc-pod-与-service-操作">3.2 Pod
+与 Service 操作</a></li>
+<li><a href="#configmap-与-secret" id="toc-configmap-与-secret">3.3
+ConfigMap 与 Secret</a></li>
+<li><a href="#检查清单" id="toc-检查清单">3.4 检查清单</a></li>
+</ul></li>
+<li><a href="#gitlab-代码仓库搭建" id="toc-gitlab-代码仓库搭建">4.
+GitLab 代码仓库搭建</a>
+<ul>
+<li><a href="#gitlab-部署" id="toc-gitlab-部署">4.1 GitLab 部署</a></li>
+<li><a href="#创建项目仓库" id="toc-创建项目仓库">4.2
+创建项目仓库</a></li>
+<li><a href="#克隆项目到本地" id="toc-克隆项目到本地">4.3
+克隆项目到本地</a></li>
+<li><a href="#项目目录结构" id="toc-项目目录结构">4.4
+项目目录结构</a></li>
+<li><a href="#redis-docker-镜像构建" id="toc-redis-docker-镜像构建">4.5
+Redis Docker 镜像构建</a>
+<ul>
+<li><a href="#dockerredisdockerfile" id="toc-dockerredisdockerfile">docker/redis/Dockerfile</a></li>
+<li><a href="#关键知识点" id="toc-关键知识点">关键知识点</a></li>
+<li><a href="#构建镜像" id="toc-构建镜像">构建镜像</a></li>
+</ul></li>
+<li><a href="#gitlab-cicd" id="toc-gitlab-cicd">4.6 GitLab CI/CD</a>
+<ul>
+<li><a href="#gitlab-ci.yml" id="toc-gitlab-ci.yml">.gitlab-ci.yml</a></li>
+</ul></li>
+<li><a href="#提交代码" id="toc-提交代码">4.7 提交代码</a></li>
+</ul></li>
+<li><a href="#redis-集群上-k8s" id="toc-redis-集群上-k8s">5. Redis
+集群上 K8s</a>
+<ul>
+<li><a href="#架构设计" id="toc-架构设计">5.1 架构设计</a>
+<ul>
+<li><a href="#redis-sentinel-高可用架构" id="toc-redis-sentinel-高可用架构">Redis Sentinel 高可用架构</a></li>
+<li><a href="#关键设计点" id="toc-关键设计点">关键设计点</a></li>
+<li><a href="#对比项传统-vs-k8s" id="toc-对比项传统-vs-k8s">对比项：传统
+vs K8s</a></li>
+</ul></li>
+<li><a href="#k8s-资源详解" id="toc-k8s-资源详解">5.2 K8s 资源详解</a>
+<ul>
+<li><a href="#k8sbasenamespace.yaml" id="toc-k8sbasenamespace.yaml">k8s/base/namespace.yaml</a></li>
+<li><a href="#k8sbaseconfigmap.yaml" id="toc-k8sbaseconfigmap.yaml">k8s/base/configmap.yaml</a></li>
+<li><a href="#k8sbasesecret.yaml" id="toc-k8sbasesecret.yaml">k8s/base/secret.yaml</a></li>
+<li><a href="#k8sbaseservice.yaml" id="toc-k8sbaseservice.yaml">k8s/base/service.yaml</a></li>
+<li><a href="#k8sbasestatefulset.yaml" id="toc-k8sbasestatefulset.yaml">k8s/base/statefulset.yaml</a></li>
+<li><a href="#k8sbasesentinel.yaml" id="toc-k8sbasesentinel.yaml">k8s/base/sentinel.yaml</a></li>
+</ul></li>
+<li><a href="#部署到-k8s" id="toc-部署到-k8s">5.3 部署到 K8s</a></li>
+<li><a href="#验证主从复制" id="toc-验证主从复制">5.4
+验证主从复制</a></li>
+<li><a href="#验证-sentinel" id="toc-验证-sentinel">5.5 验证
+Sentinel</a></li>
+<li><a href="#外部访问" id="toc-外部访问">5.6 外部访问</a></li>
+<li><a href="#检查清单-1" id="toc-检查清单-1">5.7 检查清单</a></li>
+</ul></li>
+<li><a href="#argo-cd-gitops-部署" id="toc-argo-cd-gitops-部署">6. Argo
+CD GitOps 部署</a>
+<ul>
+<li><a href="#gitops-理念" id="toc-gitops-理念">6.1 GitOps 理念</a></li>
+<li><a href="#安装-argo-cd" id="toc-安装-argo-cd">6.2 安装 Argo
+CD</a></li>
+<li><a href="#argo-cd-cli可选" id="toc-argo-cd-cli可选">6.3 Argo CD
+CLI（可选）</a></li>
+<li><a href="#argo-cd-application" id="toc-argo-cd-application">6.4 Argo
+CD Application</a>
+<ul>
+<li><a href="#argocdredis-app.yaml" id="toc-argocdredis-app.yaml">argocd/redis-app.yaml</a></li>
+<li><a href="#创建-application" id="toc-创建-application">创建
+Application</a></li>
+</ul></li>
+<li><a href="#gitops-验证" id="toc-gitops-验证">6.5 GitOps 验证</a>
+<ul>
+<li><a href="#实验-1修改配置触发同步" id="toc-实验-1修改配置触发同步">实验 1：修改配置触发同步</a></li>
+<li><a href="#实验-2自动修复self-healing" id="toc-实验-2自动修复self-healing">实验
+2：自动修复（Self-Healing）</a></li>
+<li><a href="#实验-3回滚" id="toc-实验-3回滚">实验 3：回滚</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#prometheus-监控体系" id="toc-prometheus-监控体系">7.
+Prometheus 监控体系</a>
+<ul>
+<li><a href="#监控架构" id="toc-监控架构">7.1 监控架构</a></li>
+<li><a href="#安装-prometheus-stack" id="toc-安装-prometheus-stack">7.2
+安装 Prometheus Stack</a></li>
+<li><a href="#部署-redis-exporter" id="toc-部署-redis-exporter">7.3 部署
+Redis Exporter</a>
+<ul>
+<li><a href="#redis-exporter.yaml-说明" id="toc-redis-exporter.yaml-说明">redis-exporter.yaml 说明</a></li>
+</ul></li>
+<li><a href="#配置告警规则" id="toc-配置告警规则">7.4 配置告警规则</a>
+<ul>
+<li><a href="#告警规则表" id="toc-告警规则表">告警规则表</a></li>
+</ul></li>
+<li><a href="#grafana-仪表盘" id="toc-grafana-仪表盘">7.5 Grafana
+仪表盘</a></li>
+</ul></li>
+<li><a href="#故障演练与-sop" id="toc-故障演练与-sop">8. 故障演练与
+SOP</a>
+<ul>
+<li><a href="#故障实验" id="toc-故障实验">8.1 故障实验</a>
+<ul>
+<li><a href="#实验-1master-宕机" id="toc-实验-1master-宕机">实验
+1：Master 宕机</a></li>
+<li><a href="#实验-2配置错误" id="toc-实验-2配置错误">实验
+2：配置错误</a></li>
+<li><a href="#实验-3模拟网络分区" id="toc-实验-3模拟网络分区">实验
+3：模拟网络分区</a></li>
+</ul></li>
+<li><a href="#sop-故障排查流程" id="toc-sop-故障排查流程">8.2 SOP
+故障排查流程</a>
+<ul>
+<li><a href="#redis-pod-故障" id="toc-redis-pod-故障">Redis Pod
+故障</a></li>
+<li><a href="#主从复制故障" id="toc-主从复制故障">主从复制故障</a></li>
+<li><a href="#sentinel-故障" id="toc-sentinel-故障">Sentinel
+故障</a></li>
+</ul></li>
+<li><a href="#传统运维-vs-k8s-云原生总结" id="toc-传统运维-vs-k8s-云原生总结">8.3 传统运维 vs K8s
+云原生（总结）</a></li>
+</ul></li>
+<li><a href="#docker-desktop-k8s-常见问题" id="toc-docker-desktop-k8s-常见问题">9. Docker Desktop K8s 常见问题</a>
+<ul>
+<li><a href="#q1-pod-一直-pendingpvc-未绑定" id="toc-q1-pod-一直-pendingpvc-未绑定">Q1: Pod 一直 Pending，PVC
+未绑定</a></li>
+<li><a href="#q2-imagepullbackoff" id="toc-q2-imagepullbackoff">Q2:
+ImagePullBackOff</a></li>
+<li><a href="#q3-nodeport-访问不通" id="toc-q3-nodeport-访问不通">Q3:
+NodePort 访问不通</a></li>
+<li><a href="#q4-argo-cd-无法连接-gitlab" id="toc-q4-argo-cd-无法连接-gitlab">Q4: Argo CD 无法连接 GitLab</a></li>
+<li><a href="#q5-pod-调度失败资源不足" id="toc-q5-pod-调度失败资源不足">Q5: Pod 调度失败（资源不足）</a></li>
+<li><a href="#q6-docker-desktop-k8s-环境重置" id="toc-q6-docker-desktop-k8s-环境重置">Q6: Docker Desktop K8s
+环境重置</a></li>
+</ul></li>
+<li><a href="#附录课时安排" id="toc-附录课时安排">10. 附录：课时安排</a>
+<ul>
+<li><a href="#实验检查清单" id="toc-实验检查清单">实验检查清单</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="redis-高可用集群云原生化实验手册">Redis
+高可用集群云原生化实验手册</h1>
+<h2 id="docker-desktop-k8s-适配版">（Docker Desktop K8s 适配版）</h2>
+<hr />
+<h1 id="目录">目录</h1>
+<ol type="1">
+<li><a href="#1-实验概述">实验概述</a></li>
+<li><a href="#2-环境准备">环境准备</a></li>
+<li><a href="#3-k8s-基础操作演练">K8s 基础操作演练</a></li>
+<li><a href="#4-gitlab-代码仓库搭建">GitLab 代码仓库搭建</a></li>
+<li><a href="#5-redis-集群上-k8s">Redis 集群上 K8s</a></li>
+<li><a href="#6-argo-cd-gitops-部署">Argo CD GitOps 部署</a></li>
+<li><a href="#7-prometheus-监控体系">Prometheus 监控体系</a></li>
+<li><a href="#8-故障演练与-sop">故障演练与 SOP</a></li>
+<li><a href="#9-docker-desktop-k8s-常见问题">Docker Desktop K8s
+常见问题</a></li>
+<li><a href="#10-附录课时安排">附录：课时安排</a></li>
+</ol>
+<hr />
+<h1 id="实验概述">1. 实验概述</h1>
+<h2 id="实验目标">1.1 实验目标</h2>
+<table>
+<thead>
+<tr>
+<th>传统运维方式</th>
+<th>K8s 云原生方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手动安装 Redis（yum/apt）</td>
+<td>Docker 镜像 + StatefulSet 部署</td>
+</tr>
+<tr>
+<td>Keepalived + VIP 实现高可用</td>
+<td>Redis Sentinel 自动故障转移</td>
+</tr>
+<tr>
+<td>redis.conf 手动管理</td>
+<td>ConfigMap + Secret 配置中心化</td>
+</tr>
+<tr>
+<td>手动脚本监控</td>
+<td>Prometheus Exporter 自动采集</td>
+</tr>
+<tr>
+<td>scp 分发 + 手动扩容</td>
+<td>K8s replicas 一行扩缩</td>
+</tr>
+<tr>
+<td>手动恢复</td>
+<td>PVC 持久化 + StatefulSet 自愈</td>
+</tr>
+</tbody>
+</table>
+<p>本实验将带你完成：<strong>Redis 主从集群 → Sentinel 哨兵高可用 → K8s
+部署 → GitOps 持续交付 → Prometheus 监控</strong> 的完整链路。</p>
+<h2 id="实验架构">1.2 实验架构</h2>
+<pre><code>                          ┌──────────────────────────────┐
+                          │       Argo CD (GitOps)       │
+                          │  自动同步 Git → K8s 集群     │
+                          └──────────┬───────────────────┘
+                                     │
+                          ┌──────────▼───────────────────┐
+                          │        GitLab (代码仓库)      │
+                          │   Dockerfile + K8s YAML      │
+                          └──────────────────────────────┘
+                                     │
+┌─────────────────────────────────────▼──────────────────────────────┐
+│                    Docker Desktop Kubernetes                        │
+│                                                                     │
+│  ┌───────────────────┐  ┌───────────────────┐  ┌─────────────────┐ │
+│  │ Redis StatefulSet │  │ Sentinel Deploy    │  │  Monitoring     │ │
+│  │ ┌─────┐┌─────┐   │  │ ┌───┐┌───┐┌───┐  │  │  ┌───────────┐  │ │
+│  │ │M    ││S    │S  │  │ │Sen││Sen││Sen│  │  │  │ Prometheus │  │ │
+│  │ │     ││     │   │  │ │ 0 ││ 1 ││ 2 │  │  │  │ + Grafana  │  │ │
+│  │ │0    ││1    │2  │  │ └───┘└───┘└───┘  │  │  └───────────┘  │ │
+│  │ └─────┘└─────┘   │  │   quorum = 2     │  │                 │ │
+│  └───────────────────┘  └───────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+<h2 id="前置知识">1.3 前置知识</h2>
+<ul>
+<li>了解 Docker 基础概念（镜像、容器）</li>
+<li>了解 K8s 基础资源（Pod、Service、Namespace、ConfigMap、Secret）</li>
+<li>了解 Redis 基本操作（redis-cli、主从复制概念）</li>
+<li>了解 Git 基础命令</li>
+</ul>
+<h2 id="实验时长">1.4 实验时长</h2>
+<p>总计约 <strong>12~14 课时</strong>（含实操时间）</p>
+<hr />
+<h1 id="环境准备">2. 环境准备</h1>
+<h2 id="环境检查">2.1 环境检查</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 验证 Docker</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> info</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 验证 K8s</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get nodes</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 应显示 docker-desktop 状态为 Ready</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 查看系统 Pod 状态</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-A</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># kube-system 命名空间下的 Pod 应全部 Running</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 检查 StorageClass</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get storageclass</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Docker Desktop 默认提供 hostpath StorageClass</span></span></code></pre></div>
+<blockquote>
+<p><strong>说明</strong>：Docker Desktop 内置的 Kubernetes 是一个单节点
+K8s，master 和 worker 合一。StorageClass 使用 hostpath provisioner，PVC
+会自动创建 PV。NodePort Service 可通过 localhost 直接访问。</p>
+</blockquote>
+<h2 id="docker-desktop-资源配置">2.2 Docker Desktop 资源配置</h2>
+<p>进入 Docker Desktop → Settings → Resources → Advanced：</p>
+<table>
+<thead>
+<tr>
+<th>资源项</th>
+<th>推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPUs</td>
+<td>4 核</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>8 GB</td>
+</tr>
+<tr>
+<td>Swap</td>
+<td>2 GB</td>
+</tr>
+<tr>
+<td>Disk image size</td>
+<td>60 GB+</td>
+</tr>
+</tbody>
+</table>
+<p>修改后点击 <strong>Apply &amp; Restart</strong>。</p>
+<h2 id="wsl2-环境说明">2.3 WSL2 环境说明</h2>
+<ul>
+<li>Docker Desktop 基于 WSL2，建议在 WSL2 Ubuntu 终端中操作</li>
+<li>工作目录建议放在 WSL 内部（<code>~/k8s-lab/</code>），性能优于
+<code>/mnt/c/</code> 跨文件系统</li>
+<li>Windows PowerShell / CMD 中的 <code>kubectl</code> 与 WSL
+共享同一配置</li>
+</ul>
+<h2 id="创建工作目录">2.4 创建工作目录</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/k8s-lab/redis-ha</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/k8s-lab/redis-ha</span></code></pre></div>
+<hr />
+<h1 id="k8s-基础操作演练">3. K8s 基础操作演练</h1>
+<h2 id="namespace-管理">3.1 Namespace 管理</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 创建实验用命名空间</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create namespace redis-ha</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create namespace gitlab</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create namespace argocd</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create namespace monitoring</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 查看所有命名空间</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get ns</span></code></pre></div>
+<h2 id="pod-与-service-操作">3.2 Pod 与 Service 操作</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 创建一个测试 Pod</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> run nginx-test <span class="at">--image</span><span class="op">=</span>nginx:alpine <span class="at">-n</span> redis-ha</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 查看 Pod 状态</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> redis-ha</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> describe pod nginx-test <span class="at">-n</span> redis-ha</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 查看 Pod 日志</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> logs nginx-test <span class="at">-n</span> redis-ha</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 进入 Pod 内部</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> nginx-test <span class="at">-n</span> redis-ha <span class="at">--</span> sh</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 暴露 Service（NodePort）</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> expose pod nginx-test <span class="at">--port</span><span class="op">=</span>80 <span class="at">--type</span><span class="op">=</span>NodePort <span class="at">-n</span> redis-ha</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. 查看 Service 和 NodePort</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc nginx-test <span class="at">-n</span> redis-ha</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. 通过 NodePort 访问（替换 &lt;NodePort&gt; 为实际端口号）</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># http://localhost:&lt;NodePort&gt;</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> localhost:<span class="op">&lt;</span>NodePort<span class="op">&gt;</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 8. 清理测试资源</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete pod nginx-test <span class="at">-n</span> redis-ha</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete svc nginx-test <span class="at">-n</span> redis-ha</span></code></pre></div>
+<h2 id="configmap-与-secret">3.3 ConfigMap 与 Secret</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 创建 ConfigMap</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create configmap test-config <span class="dt">\</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from-literal</span><span class="op">=</span>app.name=myapp <span class="dt">\</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from-literal</span><span class="op">=</span>app.env=production <span class="dt">\</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-n</span> redis-ha</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 创建 Secret</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create secret generic test-secret <span class="dt">\</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from-literal</span><span class="op">=</span>username=admin <span class="dt">\</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from-literal</span><span class="op">=</span>password=Admin@123 <span class="dt">\</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">-n</span> redis-ha</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 查看资源</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get configmap <span class="at">-n</span> redis-ha</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get secret <span class="at">-n</span> redis-ha</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> describe configmap test-config</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> describe secret test-secret <span class="at">-n</span> redis-ha</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 清理</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete configmap test-config <span class="at">-n</span> redis-ha</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete secret test-secret <span class="at">-n</span> redis-ha</span></code></pre></div>
+<h2 id="检查清单">3.4 检查清单</h2>
+<ul class="task-list">
+<li><label><input type="checkbox"></input><code>kubectl get nodes</code> 显示
+Ready</label></li>
+<li><label><input type="checkbox"></input>掌握 kubectl get / describe / logs /
+exec 命令</label></li>
+<li><label><input type="checkbox"></input>理解 Namespace 的作用</label></li>
+<li><label><input type="checkbox"></input>了解 NodePort Service 如何通过
+localhost 访问</label></li>
+</ul>
+<hr />
+<h1 id="gitlab-代码仓库搭建">4. GitLab 代码仓库搭建</h1>
+<h2 id="gitlab-部署">4.1 GitLab 部署</h2>
+<p>本实验使用 Docker 方式部署 GitLab CE（社区版），版本 16.10.0：</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 创建数据和日志目录</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/k8s-lab/gitlab/<span class="dt">{config</span><span class="op">,</span><span class="dt">logs</span><span class="op">,</span><span class="dt">data}</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 启动 GitLab 容器（首次启动需 5-10 分钟）</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">-d</span> <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--hostname</span> gitlab.local <span class="dt">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--publish</span> 8080:80 <span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--publish</span> 8443:443 <span class="dt">\</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--publish</span> 2222:22 <span class="dt">\</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--name</span> gitlab <span class="dt">\</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">--restart</span> always <span class="dt">\</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">--volume</span> ~/k8s-lab/gitlab/config:/etc/gitlab <span class="dt">\</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">--volume</span> ~/k8s-lab/gitlab/logs:/var/log/gitlab <span class="dt">\</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">--volume</span> ~/k8s-lab/gitlab/data:/var/opt/gitlab <span class="dt">\</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">--shm-size</span> 256m <span class="dt">\</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  gitlab/gitlab-ce:16.10.0-ce.0</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 查看启动日志</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> logs <span class="at">-f</span> gitlab</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="co"># 获取 root 初始密码</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> exec <span class="at">-it</span> gitlab grep <span class="st">&#39;Password:&#39;</span> /etc/gitlab/initial_root_password</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 浏览器访问：http://localhost:8080</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="co"># 用户名：root</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 密码：上面获取的密码</span></span></code></pre></div>
+<blockquote>
+<p>⚠️ <strong>注意</strong>：GitLab 需要至少 4GB
+可用内存，否则启动非常慢甚至失败。</p>
+</blockquote>
+<h2 id="创建项目仓库">4.2 创建项目仓库</h2>
+<ol type="1">
+<li>登录 GitLab（http://localhost:8080）</li>
+<li>右上角 <strong>Create a project</strong> → <strong>Create blank
+project</strong></li>
+<li>Project name: <code>redis-ha-k8s</code></li>
+<li>取消勾选 “Initialize repository with a README”</li>
+<li>点击 <strong>Create project</strong></li>
+</ol>
+<h2 id="克隆项目到本地">4.3 克隆项目到本地</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/k8s-lab</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># HTTP 方式克隆（用你生成的 Access Token）</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone http://root:<span class="op">&lt;</span>TOKEN<span class="op">&gt;</span>@localhost:8080/root/redis-ha-k8s.git</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> redis-ha-k8s</span></code></pre></div>
+<h2 id="项目目录结构">4.4 项目目录结构</h2>
+<pre><code>redis-ha-k8s/
+├── docker/
+│   └── redis/
+│       ├── Dockerfile            # Redis 7.2 镜像
+│       └── redis.conf            # Redis 基础配置
+├── k8s/
+│   ├── base/
+│   │   ├── namespace.yaml        # redis-ha 命名空间
+│   │   ├── configmap.yaml        # Redis + Sentinel 配置
+│   │   ├── secret.yaml           # Redis 密码
+│   │   ├── service.yaml          # Headless + NodePort + Sentinel
+│   │   ├── statefulset.yaml      # Redis 主从 StatefulSet
+│   │   └── sentinel.yaml         # Sentinel 哨兵部署
+│   └── monitoring/
+│       ├── redis-exporter.yaml   # Prometheus Exporter
+│       └── redis-alerts.yaml     # 告警规则
+├── argocd/
+│   └── redis-app.yaml            # ArgoCD Application
+├── .gitlab-ci.yml                # CI/CD 流水线
+└── README.md</code></pre>
+<h2 id="redis-docker-镜像构建">4.5 Redis Docker 镜像构建</h2>
+<h3 id="dockerredisdockerfile">docker/redis/Dockerfile</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode dockerfile"><code class="sourceCode dockerfile"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> redis:7.2-alpine</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 复制 Redis 配置</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> redis.conf /usr/local/etc/redis/redis.conf</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 健康检查</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">HEALTHCHECK</span> <span class="op">--interval=10s</span> <span class="op">--timeout=5s</span> <span class="op">--retries=5</span> \</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">CMD</span> <span class="ex">redis-cli</span> ping <span class="kw">||</span> <span class="bu">exit</span> 1</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 6379</span></code></pre></div>
+<h3 id="关键知识点">关键知识点</h3>
+<blockquote>
+<p><strong>为什么选 redis:7.2-alpine？</strong> - <code>redis</code>
+官方镜像，版本 7.2 - <code>alpine</code>
+变体：体积小（~30MB），安全，启动快 - 已内置
+redis-server、redis-cli、redis-sentinel，无需额外安装</p>
+</blockquote>
+<blockquote>
+<p><strong>对比 MySQL Dockerfile</strong> - Redis 更简单：不需要
+init.sql，不需要安装 Shell/Router - 主从复制通过启动参数
+<code>replicaof</code> 一行搞定 - Sentinel 是 Redis
+自带的，不需要额外组件</p>
+</blockquote>
+<h3 id="构建镜像">构建镜像</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/k8s-lab/redis-ha-k8s</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> redis-ha:7.2 ./docker/redis</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 验证镜像</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> images <span class="kw">|</span> <span class="fu">grep</span> redis-ha</span></code></pre></div>
+<blockquote>
+<p>📌 <strong>注意</strong>：Docker Desktop 构建的镜像在 K8s
+中可直接使用，但 YAML 中需设置
+<code>imagePullPolicy: IfNotPresent</code>，防止去远程仓库拉取。</p>
+</blockquote>
+<h2 id="gitlab-cicd">4.6 GitLab CI/CD</h2>
+<h3 id="gitlab-ci.yml">.gitlab-ci.yml</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stages</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> build</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> test</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">variables</span><span class="kw">:</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">IMAGE_NAME</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;redis-ha/redis&quot;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">IMAGE_TAG</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;$CI_COMMIT_SHORT_SHA&quot;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="fu">build-redis-image</span><span class="kw">:</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">stage</span><span class="kw">:</span><span class="at"> build</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span><span class="at"> docker:24.0</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">services</span><span class="kw">:</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> docker:24.0-dind</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">script</span><span class="kw">:</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> docker build -t $IMAGE_NAME:$IMAGE_TAG ./docker/redis</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">echo &quot;Image built</span><span class="kw">:</span><span class="at"> $IMAGE_NAME:$IMAGE_TAG&quot;</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">only</span><span class="kw">:</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> main</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> develop</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="fu">lint-k8s-manifests</span><span class="kw">:</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">stage</span><span class="kw">:</span><span class="at"> test</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">image</span><span class="kw">:</span><span class="at"> alpine/helm:3.13.0</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">script</span><span class="kw">:</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> echo &quot;K8s manifests lint check passed&quot;</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">only</span><span class="kw">:</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> merge_requests</span></span></code></pre></div>
+<h2 id="提交代码">4.7 提交代码</h2>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/k8s-lab/redis-ha-k8s</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add .</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;Initial commit: Redis HA K8s project&quot;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin main</span></code></pre></div>
+<hr />
+<h1 id="redis-集群上-k8s">5. Redis 集群上 K8s</h1>
+<h2 id="架构设计">5.1 架构设计</h2>
+<h3 id="redis-sentinel-高可用架构">Redis Sentinel 高可用架构</h3>
+<pre><code>         ┌──────────┐  ┌──────────┐  ┌──────────┐
+         │Sentinel 0│  │Sentinel 1│  │Sentinel 2│  ← 哨兵集群
+         │  :26379  │  │  :26379  │  │  :26379  │     quorum=2
+         └────┬─────┘  └────┬─────┘  └────┬─────┘
+              │              │              │
+              └──────────────┼──────────────┘
+                             │ 监控 + 管理
+              ┌──────────────┼──────────────┐
+              │              │              │
+        ┌─────▼─────┐  ┌────▼─────┐  ┌────▼─────┐
+        │  redis-0  │  │ redis-1  │  │ redis-2  │  ← Redis 集群
+        │  Master   │  │  Slave   │  │  Slave   │     StatefulSet
+        │  (读写)   │  │  (只读)  │  │  (只读)  │
+        └───────────┘  └──────────┘  └──────────┘
+             │              │              │
+             └──────────────┴──────────────┘
+                    自动异步复制</code></pre>
+<h3 id="关键设计点">关键设计点</h3>
+<table>
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr>
+<th>设计要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>StatefulSet redis-0 为初始 Master</td>
+<td>InitContainer 根据 Pod 序号设置角色</td>
+</tr>
+<tr>
+<td>redis-1, redis-2 自动 replicaof redis-0</td>
+<td>启动时即建立主从关系</td>
+</tr>
+<tr>
+<td>3 个 Sentinel 独立部署</td>
+<td>避免与 Redis 实例同 Pod 相互影响</td>
+</tr>
+<tr>
+<td>quorum=2</td>
+<td>3 个 Sentinel 中至少 2 个同意才故障转移</td>
+</tr>
+<tr>
+<td>Headless Service</td>
+<td>提供稳定 DNS：<code>redis-0.redis-headless.redis-ha.svc</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="对比项传统-vs-k8s">对比项：传统 vs K8s</h3>
+<table>
+<thead>
+<tr>
+<th>传统运维</th>
+<th>K8s 云原生</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手动安装 Redis：yum/apt</td>
+<td>Docker 镜像一键部署，StatefulSet 管理</td>
+</tr>
+<tr>
+<td>Keepalived + VIP 漂移</td>
+<td>Redis Sentinel 自动故障发现和转移</td>
+</tr>
+<tr>
+<td>redis.conf 散落在各节点</td>
+<td>ConfigMap 集中管理，一处修改处处生效</td>
+</tr>
+<tr>
+<td>密码明文写在配置里</td>
+<td>Secret 加密存储，环境变量注入</td>
+</tr>
+<tr>
+<td>通过 IP 写死主从关系</td>
+<td>DNS 稳定标识，Pod 重启 IP 变了也能找到</td>
+</tr>
+<tr>
+<td>手动脚本监控</td>
+<td>Prometheus Exporter 自动采集指标</td>
+</tr>
+<tr>
+<td>PVC + PV 实现数据持久化</td>
+<td>数据不在 Pod 里，Pod 挂了数据还在</td>
+</tr>
+</tbody>
+</table>
+<h2 id="k8s-资源详解">5.2 K8s 资源详解</h2>
+<h3 id="k8sbasenamespace.yaml">k8s/base/namespace.yaml</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Namespace</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-ha</span></span></code></pre></div>
+<h3 id="k8sbaseconfigmap.yaml">k8s/base/configmap.yaml</h3>
+<p>ConfigMap 存储两份配置：Redis 主从配置 + Sentinel 哨兵配置。</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> ConfigMap</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-config</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span><span class="kw">:</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">  redis.conf</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    bind 0.0.0.0</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    port 6379</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    protected-mode no</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    save 900 1</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    save 300 10</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    save 60 10000</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    dbfilename dump.rdb</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    dir /data</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    loglevel notice</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    logfile &quot;&quot;</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    maxmemory 256mb</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    maxmemory-policy allkeys-lru</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="fu">  sentinel.conf</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    bind 0.0.0.0</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    port 26379</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    dir /tmp</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    sentinel monitor mymaster redis-0.redis-headless.redis-ha.svc.cluster.local 6379 2</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    sentinel down-after-milliseconds mymaster 5000</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    sentinel failover-timeout mymaster 15000</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    sentinel parallel-syncs mymaster 1</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    sentinel auth-pass mymaster Redis@123456</span></code></pre></div>
+<blockquote>
+<p><strong>参数解释</strong>： - <code>sentinel monitor</code>：监控
+Master，quorum=2 表示至少 2 个 Sentinel 同意才判定 Master 下线 -
+<code>down-after-milliseconds 5000</code>：5 秒无响应即标记为主观下线 -
+<code>failover-timeout 15000</code>：故障转移最长等待 15 秒 -
+<code>parallel-syncs 1</code>：故障转移时，同时只有 1 个 Slave 同步新
+Master</p>
+</blockquote>
+<h3 id="k8sbasesecret.yaml">k8s/base/secret.yaml</h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Secret</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-secret</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">type</span><span class="kw">:</span><span class="at"> Opaque</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="fu">stringData</span><span class="kw">:</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">redis-password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;Redis@123456&quot;</span></span></code></pre></div>
+<blockquote>
+<p>📌 <strong>Secret vs ConfigMap</strong>：密码用 Secret 而非
+ConfigMap。Secret 数据经过 base64 编码，且支持 etcd 加密存储。ConfigMap
+用于明文配置。</p>
+</blockquote>
+<h3 id="k8sbaseservice.yaml">k8s/base/service.yaml</h3>
+<p>三个 Service，各司其职：</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Headless Service —— StatefulSet 稳定 DNS</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Service</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-headless</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">clusterIP</span><span class="kw">:</span><span class="at"> None</span><span class="co">          # Headless 的关键</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. NodePort Service —— 外部访问 Redis</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Service</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-service</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">targetPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">nodePort</span><span class="kw">:</span><span class="at"> </span><span class="dv">30379</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">type</span><span class="kw">:</span><span class="at"> NodePort</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Sentinel Service —— 哨兵间通信</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> v1</span></span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Service</span></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-service</span></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="dv">26379</span></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">targetPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">26379</span></span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">app</span><span class="kw">:</span><span class="at"> sentinel</span></span></code></pre></div>
+<blockquote>
+<p><strong>为什么需要 Headless Service？</strong> StatefulSet 中每个 Pod
+需要稳定网络标识。Headless Service（clusterIP: None）不为 Service
+分配固定 IP，而是给每个 Pod 分配 DNS A 记录： -
+<code>redis-0.redis-headless.redis-ha.svc.cluster.local</code> -
+<code>redis-1.redis-headless.redis-ha.svc.cluster.local</code> -
+<code>redis-2.redis-headless.redis-ha.svc.cluster.local</code></p>
+<p>Sentinel 用 DNS 名监控 Master，而不是 IP，因为 Pod 重启 IP 会变。</p>
+</blockquote>
+<h3 id="k8sbasestatefulset.yaml">k8s/base/statefulset.yaml</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> apps/v1</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> StatefulSet</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">serviceName</span><span class="kw">:</span><span class="at"> redis-headless</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span><span class="co">               # 1 Master + 2 Slave</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="co">      # InitContainer：根据 Pod 序号生成配置</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">initContainers</span><span class="kw">:</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> init-redis</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">image</span><span class="kw">:</span><span class="at"> redis:7.2-alpine</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">imagePullPolicy</span><span class="kw">:</span><span class="at"> IfNotPresent</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> sh</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;-c&quot;</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="kw">        - </span><span class="ch">|</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>          set -ex</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>          ordinal=${HOSTNAME##*-}</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>          # 复制基础配置</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>          cp /mnt/config/redis.conf /mnt/pod-config/redis.conf</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>          # 注入密码</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>          echo &quot;requirepass ${REDIS_PASSWORD}&quot; &gt;&gt; /mnt/pod-config/redis.conf</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>          echo &quot;masterauth ${REDIS_PASSWORD}&quot; &gt;&gt; /mnt/pod-config/redis.conf</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>          if [ &quot;$ordinal&quot; != &quot;0&quot; ]; then</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>            # 非 0 节点：设为 Slave</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>            echo &quot;replicaof redis-0.redis-headless.redis-ha.svc.cluster.local 6379&quot; \</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>              &gt;&gt; /mnt/pod-config/redis.conf</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>            echo &quot;Configured as slave of redis-0&quot;</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>          else</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>            echo &quot;Configured as master&quot;</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>          fi</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> REDIS_PASSWORD</span></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">valueFrom</span><span class="kw">:</span></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">secretKeyRef</span><span class="kw">:</span></span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a><span class="at">              </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-secret</span></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a><span class="at">              </span><span class="fu">key</span><span class="kw">:</span><span class="at"> redis-password</span></span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">volumeMounts</span><span class="kw">:</span></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> pod-config</span></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/pod-config</span></span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-config</span></span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/config</span></span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a><span class="co">      # 主容器：Redis</span></span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">containers</span><span class="kw">:</span></span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">image</span><span class="kw">:</span><span class="at"> redis:7.2-alpine</span></span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">imagePullPolicy</span><span class="kw">:</span><span class="at"> IfNotPresent</span></span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">6379</span></span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis</span></span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> redis-server</span></span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> /mnt/pod-config/redis.conf</span></span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">volumeMounts</span><span class="kw">:</span></span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-data</span></span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /data</span></span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> pod-config</span></span>
+<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/pod-config</span></span>
+<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">livenessProbe</span><span class="kw">:</span></span>
+<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">exec</span><span class="kw">:</span></span>
+<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> redis-cli</span></span>
+<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> -a</span></span>
+<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;$(REDIS_PASSWORD)&quot;</span></span>
+<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> ping</span></span>
+<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">initialDelaySeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
+<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">periodSeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">readinessProbe</span><span class="kw">:</span></span>
+<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">exec</span><span class="kw">:</span></span>
+<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> redis-cli</span></span>
+<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> -a</span></span>
+<span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;$(REDIS_PASSWORD)&quot;</span></span>
+<span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> ping</span></span>
+<span id="cb19-88"><a href="#cb19-88" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">initialDelaySeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb19-89"><a href="#cb19-89" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">periodSeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">5</span></span>
+<span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> REDIS_PASSWORD</span></span>
+<span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">valueFrom</span><span class="kw">:</span></span>
+<span id="cb19-93"><a href="#cb19-93" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">secretKeyRef</span><span class="kw">:</span></span>
+<span id="cb19-94"><a href="#cb19-94" aria-hidden="true" tabindex="-1"></a><span class="at">              </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-secret</span></span>
+<span id="cb19-95"><a href="#cb19-95" aria-hidden="true" tabindex="-1"></a><span class="at">              </span><span class="fu">key</span><span class="kw">:</span><span class="at"> redis-password</span></span>
+<span id="cb19-96"><a href="#cb19-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-97"><a href="#cb19-97" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb19-98"><a href="#cb19-98" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-config</span></span>
+<span id="cb19-99"><a href="#cb19-99" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">configMap</span><span class="kw">:</span></span>
+<span id="cb19-100"><a href="#cb19-100" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-config</span></span>
+<span id="cb19-101"><a href="#cb19-101" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">items</span><span class="kw">:</span></span>
+<span id="cb19-102"><a href="#cb19-102" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">key</span><span class="kw">:</span><span class="at"> redis.conf</span></span>
+<span id="cb19-103"><a href="#cb19-103" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> redis.conf</span></span>
+<span id="cb19-104"><a href="#cb19-104" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> pod-config</span></span>
+<span id="cb19-105"><a href="#cb19-105" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">emptyDir</span><span class="kw">:</span><span class="at"> </span><span class="kw">{}</span></span>
+<span id="cb19-106"><a href="#cb19-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-107"><a href="#cb19-107" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">volumeClaimTemplates</span><span class="kw">:</span></span>
+<span id="cb19-108"><a href="#cb19-108" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb19-109"><a href="#cb19-109" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-data</span></span>
+<span id="cb19-110"><a href="#cb19-110" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb19-111"><a href="#cb19-111" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">accessModes</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;ReadWriteOnce&quot;</span><span class="kw">]</span></span>
+<span id="cb19-112"><a href="#cb19-112" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">resources</span><span class="kw">:</span></span>
+<span id="cb19-113"><a href="#cb19-113" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">requests</span><span class="kw">:</span></span>
+<span id="cb19-114"><a href="#cb19-114" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">storage</span><span class="kw">:</span><span class="at"> 5Gi</span></span></code></pre></div>
+<blockquote>
+<p><strong>InitContainer 角色决定逻辑</strong>： 1.
+<code>${HOSTNAME##*-}</code> 提取 Pod 名末尾数字（redis-0 → 0，redis-1 →
+1） 2. ordinal=0：Master（不做 replicaof） 3.
+ordinal≠0：Slave（replicaof redis-0）</p>
+<p>这种方式避免手动创建 replication-init Job，Pod 启动即确定角色。</p>
+</blockquote>
+<h3 id="k8sbasesentinel.yaml">k8s/base/sentinel.yaml</h3>
+<div class="sourceCode" id="cb20"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> apps/v1</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Deployment</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">3</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">app</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">app</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">affinity</span><span class="kw">:</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">podAntiAffinity</span><span class="kw">:</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">requiredDuringSchedulingIgnoredDuringExecution</span><span class="kw">:</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">labelSelector</span><span class="kw">:</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="at">              </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="at">                </span><span class="fu">app</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">topologyKey</span><span class="kw">:</span><span class="at"> kubernetes.io/hostname</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">initContainers</span><span class="kw">:</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> init-sentinel</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">image</span><span class="kw">:</span><span class="at"> redis:7.2-alpine</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">imagePullPolicy</span><span class="kw">:</span><span class="at"> IfNotPresent</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> sh</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;-c&quot;</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="kw">        - </span><span class="ch">|</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>          cp /mnt/config/sentinel.conf /mnt/sentinel-config/sentinel.conf</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>          echo &quot;sentinel resolve-hostnames yes&quot; &gt;&gt; /mnt/sentinel-config/sentinel.conf</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>          echo &quot;sentinel announce-hostnames yes&quot; &gt;&gt; /mnt/sentinel-config/sentinel.conf</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">volumeMounts</span><span class="kw">:</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-config</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/sentinel-config</span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-config-template</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/config</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">containers</span><span class="kw">:</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">image</span><span class="kw">:</span><span class="at"> redis:7.2-alpine</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">imagePullPolicy</span><span class="kw">:</span><span class="at"> IfNotPresent</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">26379</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel</span></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> redis-sentinel</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> /mnt/sentinel-config/sentinel.conf</span></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">volumeMounts</span><span class="kw">:</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-config</span></span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mountPath</span><span class="kw">:</span><span class="at"> /mnt/sentinel-config</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">livenessProbe</span><span class="kw">:</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">exec</span><span class="kw">:</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">command</span><span class="kw">:</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> redis-cli</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> -p</span></span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;26379&quot;</span></span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="kw">-</span><span class="at"> ping</span></span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">initialDelaySeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">15</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">periodSeconds</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-config-template</span></span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">configMap</span><span class="kw">:</span></span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-config</span></span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">items</span><span class="kw">:</span></span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">key</span><span class="kw">:</span><span class="at"> sentinel.conf</span></span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">path</span><span class="kw">:</span><span class="at"> sentinel.conf</span></span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> sentinel-config</span></span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">emptyDir</span><span class="kw">:</span><span class="at"> </span><span class="kw">{}</span></span></code></pre></div>
+<blockquote>
+<p><strong>Sentinel 关键设计</strong>： - 使用 Deployment 而非
+StatefulSet（Sentinel 无状态，不需要稳定标识） - podAntiAffinity 将
+Sentinel 分散调度，提高可用性 - quorum=2：3 个 Sentinel，至少 2
+个同意才进行故障转移</p>
+</blockquote>
+<h2 id="部署到-k8s">5.3 部署到 K8s</h2>
+<div class="sourceCode" id="cb21"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/k8s-lab/redis-ha-k8s</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 按顺序 apply</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/namespace.yaml</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/configmap.yaml</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/secret.yaml</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/service.yaml</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 部署 StatefulSet</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/statefulset.yaml</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 等待 Pod 就绪（redis-0 → redis-1 → redis-2 依次启动）</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> redis-ha <span class="at">-w</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Ctrl+C 退出 watch</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 部署 Sentinel</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/base/sentinel.yaml</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 确认所有资源</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get all <span class="at">-n</span> redis-ha</span></code></pre></div>
+<blockquote>
+<p>📌 <strong>启动顺序</strong>：StatefulSet 按序号 0 → 1 → 2
+顺序启动，确保 redis-0（Master）先就绪，然后 redis-1、redis-2 作为 Slave
+加入。</p>
+</blockquote>
+<h2 id="验证主从复制">5.4 验证主从复制</h2>
+<div class="sourceCode" id="cb22"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 查看 redis-0 的角色</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 info replication <span class="kw">|</span> <span class="fu">grep</span> role</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 输出：role:master</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 查看 redis-1 的角色</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-1 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 info replication <span class="kw">|</span> <span class="fu">grep</span> role</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 输出：role:slave</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 在 Master 写入数据</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 set hello <span class="st">&quot;World from K8s&quot;</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 在 Slave 读取数据</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-1 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 get hello</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 输出：&quot;World from K8s&quot;</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 在 Slave 尝试写入（应被拒绝）</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-1 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 set test <span class="st">&quot;fail&quot;</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="co"># 输出：(error) READONLY You can&#39;t write against a read only replica.</span></span></code></pre></div>
+<h2 id="验证-sentinel">5.5 验证 Sentinel</h2>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 查看 Sentinel 监控的 Master</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/sentinel <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-p</span> 26379 sentinel master mymaster</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 查看所有 Slave</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/sentinel <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-p</span> 26379 sentinel slaves mymaster</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 查看所有 Sentinel</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/sentinel <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-p</span> 26379 sentinel sentinels mymaster</span></code></pre></div>
+<h2 id="外部访问">5.6 外部访问</h2>
+<div class="sourceCode" id="cb24"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 获取 NodePort</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc redis-service <span class="at">-n</span> redis-ha</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 使用 redis-cli 连接</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="ex">redis-cli</span> <span class="at">-h</span> localhost <span class="at">-p</span> 30379 <span class="at">-a</span> Redis@123456</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 或使用 telnet</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="ex">telnet</span> localhost 30379</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 输入：PING</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 输出：+PONG</span></span></code></pre></div>
+<h2 id="检查清单-1">5.7 检查清单</h2>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>StatefulSet 3 个 Pod 全部
+Running</label></li>
+<li><label><input type="checkbox"></input>redis-0 为 Master，redis-1/redis-2
+为 Slave</label></li>
+<li><label><input type="checkbox"></input>Master 写入数据，Slave
+能读取</label></li>
+<li><label><input type="checkbox"></input>Sentinel 正确识别 Master 和
+Slave</label></li>
+<li><label><input type="checkbox"></input>localhost:30379 能连接
+Redis</label></li>
+<li><label><input type="checkbox"></input>PVC
+已创建：<code>kubectl get pvc -n redis-ha</code></label></li>
+</ul>
+<hr />
+<h1 id="argo-cd-gitops-部署">6. Argo CD GitOps 部署</h1>
+<h2 id="gitops-理念">6.1 GitOps 理念</h2>
+<pre><code>传统方式：手动 kubectl apply → 不可追溯，易出错
+GitOps  ：Git 是唯一真相源 → Argo CD 自动同步到集群
+
+工作流：修改 Git YAML → git push → Argo CD 自动 apply → 集群更新</code></pre>
+<h2 id="安装-argo-cd">6.2 安装 Argo CD</h2>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 创建命名空间</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> create namespace argocd</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 安装 Argo CD</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-n</span> argocd <span class="at">-f</span> https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 等待所有 Pod Running（约 2-3 分钟）</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> argocd <span class="at">-w</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 获取 admin 初始密码</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">-n</span> argocd get secret argocd-initial-admin-secret <span class="at">-o</span> jsonpath=<span class="st">&quot;{.data.password}&quot;</span> <span class="kw">|</span> <span class="fu">base64</span> <span class="at">-d</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 暴露 Argo CD Server 为 NodePort</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> patch svc argocd-server <span class="at">-n</span> argocd <span class="at">-p</span> <span class="st">&#39;{&quot;spec&quot;: {&quot;type&quot;: &quot;NodePort&quot;}}&#39;</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. 获取 NodePort</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc argocd-server <span class="at">-n</span> argocd</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 7. 浏览器访问</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="co"># https://localhost:&lt;NodePort&gt;</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="co"># 用户名：admin</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 密码：第 4 步的输出</span></span></code></pre></div>
+<blockquote>
+<p>⚠️ Docker Desktop 中 Argo CD 用
+HTTPS（自签证书），浏览器提示不安全时点击 “高级” → “继续访问”。</p>
+</blockquote>
+<h2 id="argo-cd-cli可选">6.3 Argo CD CLI（可选）</h2>
+<div class="sourceCode" id="cb27"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 安装 CLI</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sSL</span> <span class="at">-o</span> argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> install <span class="at">-m</span> 555 argocd /usr/local/bin/argocd</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 验证</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="ex">argocd</span> version <span class="at">--client</span></span></code></pre></div>
+<h2 id="argo-cd-application">6.4 Argo CD Application</h2>
+<h3 id="argocdredis-app.yaml">argocd/redis-app.yaml</h3>
+<div class="sourceCode" id="cb28"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> argoproj.io/v1alpha1</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Application</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> argocd</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">project</span><span class="kw">:</span><span class="at"> default</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">source</span><span class="kw">:</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">repoURL</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;http://gitlab.local/root/redis-ha-k8s.git&#39;</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">targetRevision</span><span class="kw">:</span><span class="at"> main</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> k8s/base</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">destination</span><span class="kw">:</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">server</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;https://kubernetes.default.svc&#39;</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> redis-ha</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">syncPolicy</span><span class="kw">:</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">automated</span><span class="kw">:</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">prune</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span><span class="co">           # Git 中删除的文件，集群中也删除</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">selfHeal</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span><span class="co">        # 手动改集群的，自动回滚到 Git 状态</span></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">syncOptions</span><span class="kw">:</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> CreateNamespace=true</span><span class="co">  # 自动创建 namespace</span></span></code></pre></div>
+<blockquote>
+<p>📌 <strong>repoURL 说明</strong>： - GitLab 和 K8s 在同一台机器：用
+Docker 内部地址或 <code>host.docker.internal:8080</code> -
+测试验证：<code>kubectl exec -it -n argocd &lt;repo-server-pod&gt; -- curl http://host.docker.internal:8080</code></p>
+</blockquote>
+<h3 id="创建-application">创建 Application</h3>
+<div class="sourceCode" id="cb29"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> argocd/redis-app.yaml</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 查看状态</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get application <span class="at">-n</span> argocd</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 应显示 Healthy + Synced</span></span></code></pre></div>
+<h2 id="gitops-验证">6.5 GitOps 验证</h2>
+<h3 id="实验-1修改配置触发同步">实验 1：修改配置触发同步</h3>
+<div class="sourceCode" id="cb30"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 修改 ConfigMap：maxmemory 从 256mb 改为 512mb</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 编辑 k8s/base/configmap.yaml</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 提交并推送</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add k8s/base/configmap.yaml</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;Increase maxmemory to 512mb&quot;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin main</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 观察 Argo CD 自动同步（约 3 分钟内）</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get application <span class="at">-n</span> argocd <span class="at">-w</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 验证 ConfigMap 已更新</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get configmap redis-config <span class="at">-n</span> redis-ha <span class="at">-o</span> yaml <span class="kw">|</span> <span class="fu">grep</span> maxmemory</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 重启 StatefulSet 使 Redis 加载新配置</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> rollout restart statefulset redis <span class="at">-n</span> redis-ha</span></code></pre></div>
+<h3 id="实验-2自动修复self-healing">实验
+2：自动修复（Self-Healing）</h3>
+<div class="sourceCode" id="cb31"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 手动删除一个 Service（模拟误操作）</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete svc redis-service <span class="at">-n</span> redis-ha</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 观察 Argo CD 自动恢复（1-2 分钟内）</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc redis-service <span class="at">-n</span> redis-ha</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Service 被自动重建</span></span></code></pre></div>
+<h3 id="实验-3回滚">实验 3：回滚</h3>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 方法一：Argo CD UI → redis-ha → HISTORY AND ROLLBACK → 选择版本 → Rollback</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 方法二：Git revert</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> revert HEAD</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push origin main</span></code></pre></div>
+<hr />
+<h1 id="prometheus-监控体系">7. Prometheus 监控体系</h1>
+<h2 id="监控架构">7.1 监控架构</h2>
+<pre><code>Redis Exporter (Deployment)
+       │
+       │  采集 Redis 指标
+       │
+       ▼
+Prometheus (kube-prometheus-stack)
+       │
+       │  存储 + 告警
+       │
+       ▼
+Grafana (Dashboards 可视化)
+       │
+       │  仪表盘 ID: 763 (Redis Dashboard)
+       ▼
+AlertManager (告警通知)</code></pre>
+<h2 id="安装-prometheus-stack">7.2 安装 Prometheus Stack</h2>
+<div class="sourceCode" id="cb34"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 安装 Helm</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 <span class="kw">|</span> <span class="fu">bash</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="ex">helm</span> version</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 添加 Helm 仓库</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="ex">helm</span> repo add prometheus-community https://prometheus-community.github.io/helm-charts</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="ex">helm</span> repo update</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 安装 kube-prometheus-stack</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="ex">helm</span> install kube-prom-stack prometheus-community/kube-prometheus-stack <span class="dt">\</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">--namespace</span> monitoring <span class="dt">\</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">--create-namespace</span> <span class="dt">\</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">--set</span> prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false <span class="dt">\</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">--set</span> grafana.service.type=NodePort <span class="dt">\</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">--set</span> prometheus.service.type=NodePort</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 等待 Pod 就绪（约 2-3 分钟）</span></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> monitoring <span class="at">-w</span></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 获取 Grafana NodePort</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc kube-prom-stack-grafana <span class="at">-n</span> monitoring</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. 访问 Grafana</span></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a><span class="co"># http://localhost:&lt;Grafana NodePort&gt;</span></span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a><span class="co"># 用户名：admin</span></span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 密码：prom-operator</span></span></code></pre></div>
+<h2 id="部署-redis-exporter">7.3 部署 Redis Exporter</h2>
+<div class="sourceCode" id="cb35"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 在 redis-0 上创建 exporter 用户（可选）</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 ACL SETUSER exporter ON <span class="op">&gt;</span>Exporter@123456 +INFO +PING</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 部署 Exporter</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/monitoring/redis-exporter.yaml</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 验证</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> monitoring <span class="at">-l</span> app=redis-exporter</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get servicemonitor <span class="at">-n</span> monitoring</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 检查指标</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/redis-exporter <span class="at">-n</span> monitoring <span class="at">--</span> curl localhost:9121/metrics <span class="kw">|</span> <span class="fu">head</span> <span class="at">-20</span></span></code></pre></div>
+<h3 id="redis-exporter.yaml-说明">redis-exporter.yaml 说明</h3>
+<div class="sourceCode" id="cb36"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> apps/v1</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> Deployment</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-exporter</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> monitoring</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">replicas</span><span class="kw">:</span><span class="at"> </span><span class="dv">1</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis-exporter</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">containers</span><span class="kw">:</span></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-exporter</span></span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">image</span><span class="kw">:</span><span class="at"> oliver006/redis_exporter:v1.59.0</span></span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">imagePullPolicy</span><span class="kw">:</span><span class="at"> IfNotPresent</span></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">containerPort</span><span class="kw">:</span><span class="at"> </span><span class="dv">9121</span></span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">name</span><span class="kw">:</span><span class="at"> metrics</span></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> REDIS_ADDR</span></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;redis://:Redis@123456@redis-service.redis-ha.svc.cluster.local:6379&quot;</span></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a><span class="fu">apiVersion</span><span class="kw">:</span><span class="at"> monitoring.coreos.com/v1</span></span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a><span class="fu">kind</span><span class="kw">:</span><span class="at"> ServiceMonitor</span></span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> redis-exporter</span></span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> monitoring</span></span>
+<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">labels</span><span class="kw">:</span></span>
+<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">release</span><span class="kw">:</span><span class="at"> kube-prom-stack</span><span class="co">   # 匹配 Prometheus 配置</span></span>
+<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a><span class="fu">spec</span><span class="kw">:</span></span>
+<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">selector</span><span class="kw">:</span></span>
+<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">matchLabels</span><span class="kw">:</span></span>
+<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">app</span><span class="kw">:</span><span class="at"> redis-exporter</span></span>
+<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">endpoints</span><span class="kw">:</span></span>
+<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">port</span><span class="kw">:</span><span class="at"> metrics</span></span>
+<span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interval</span><span class="kw">:</span><span class="at"> 15s</span></span></code></pre></div>
+<blockquote>
+<p><strong>核心机制</strong>：ServiceMonitor 通过
+<code>release: kube-prom-stack</code> 标签被 Prometheus
+自动发现，无需手动配置 prometheus.yml。</p>
+</blockquote>
+<h2 id="配置告警规则">7.4 配置告警规则</h2>
+<div class="sourceCode" id="cb37"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> apply <span class="at">-f</span> k8s/monitoring/redis-alerts.yaml</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 验证</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get prometheusrule <span class="at">-n</span> monitoring</span></code></pre></div>
+<h3 id="告警规则表">告警规则表</h3>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 27%" />
+<col style="width: 27%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr>
+<th>告警名称</th>
+<th>触发条件</th>
+<th>严重级别</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RedisDown</td>
+<td><code>redis_up == 0</code> 持续 1 分钟</td>
+<td>critical</td>
+<td>Redis 实例宕机</td>
+</tr>
+<tr>
+<td>RedisMasterDown</td>
+<td>无 Master 节点超过 30 秒</td>
+<td>critical</td>
+<td>Sentinel 可能正在故障转移</td>
+</tr>
+<tr>
+<td>RedisTooManyConnections</td>
+<td>连接数 &gt; maxclients 的 80%</td>
+<td>warning</td>
+<td>连接数过高</td>
+</tr>
+<tr>
+<td>RedisRejectedConnections</td>
+<td>有被拒绝的连接</td>
+<td>warning</td>
+<td>可能达到连接上限</td>
+</tr>
+<tr>
+<td>RedisMemoryHigh</td>
+<td>内存使用率 &gt; 80%</td>
+<td>warning</td>
+<td>内存使用过高</td>
+</tr>
+</tbody>
+</table>
+<h2 id="grafana-仪表盘">7.5 Grafana 仪表盘</h2>
+<ol type="1">
+<li>登录 Grafana → Dashboards → Import</li>
+<li>输入 Dashboard ID：<strong>763</strong>（Redis Dashboard for
+Prometheus）</li>
+<li>选择 Prometheus 数据源 → Import</li>
+<li>查看 Redis 指标：
+<ul>
+<li>QPS（每秒查询数）</li>
+<li>连接数</li>
+<li>内存使用率</li>
+<li>命中率</li>
+<li>主从复制延迟</li>
+</ul></li>
+</ol>
+<hr />
+<h1 id="故障演练与-sop">8. 故障演练与 SOP</h1>
+<h2 id="故障实验">8.1 故障实验</h2>
+<h3 id="实验-1master-宕机">实验 1：Master 宕机</h3>
+<div class="sourceCode" id="cb38"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 确认当前 Master 和数据</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 info replication <span class="kw">|</span> <span class="fu">grep</span> role</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 keys <span class="st">&#39;*&#39;</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 删除 redis-0（模拟宕机）</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete pod redis-0 <span class="at">-n</span> redis-ha</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 观察 StatefulSet 自动重建 Pod</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> redis-ha <span class="at">-w</span></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 观察 Sentinel 的故障转移</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/sentinel <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-p</span> 26379 sentinel master mymaster</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 注意 Master 已切换到 redis-1 或 redis-2</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 检查数据完整性</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> <span class="op">&lt;</span>new-master<span class="op">&gt;</span> -n redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 keys <span class="st">&#39;*&#39;</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 数据应完整存在</span></span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. 查看 redis-0 恢复后的角色（变为 Slave）</span></span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> redis-0 <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-a</span> Redis@123456 info replication <span class="kw">|</span> <span class="fu">grep</span> role</span></code></pre></div>
+<blockquote>
+<p><strong>关键观察</strong>： 1. Sentinel 在 5 秒内检测到 Master 宕机
+2. 故障转移在约 15 秒内完成 3. 新 Master 的数据完整 4. 原 Master
+恢复后自动成为 Slave，不会造成脑裂 5. PVC 保证了数据持久化，Pod
+重启数据不丢</p>
+</blockquote>
+<h3 id="实验-2配置错误">实验 2：配置错误</h3>
+<div class="sourceCode" id="cb39"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 修改 ConfigMap 中 redis.conf 的一个正确参数（如 maxmemory-policy）为错误值</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> edit configmap redis-config <span class="at">-n</span> redis-ha</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 重启 StatefulSet</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> rollout restart statefulset redis <span class="at">-n</span> redis-ha</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 观察 Pod 状态</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> redis-ha</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Pod 可能 CrashLoopBackOff</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 查看日志定位问题</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> logs redis-0 <span class="at">-n</span> redis-ha</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> logs redis-0 <span class="at">-n</span> redis-ha <span class="at">--previous</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 恢复配置</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 修改 ConfigMap 回正确值 → restart</span></span></code></pre></div>
+<h3 id="实验-3模拟网络分区">实验 3：模拟网络分区</h3>
+<div class="sourceCode" id="cb40"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 删除一个 Sentinel Pod</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> delete pod sentinel-xxx <span class="at">-n</span> redis-ha</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 观察 Deployment 自动恢复</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get pods <span class="at">-n</span> redis-ha <span class="at">-w</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 检查 Sentinel 集群信息</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> deploy/sentinel <span class="at">-n</span> redis-ha <span class="at">--</span> redis-cli <span class="at">-p</span> 26379 sentinel ckquorum mymaster</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a><span class="co"># ckquorum 检查是否达到 quorum</span></span></code></pre></div>
+<h2 id="sop-故障排查流程">8.2 SOP 故障排查流程</h2>
+<h3 id="redis-pod-故障">Redis Pod 故障</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>步骤</th>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 查看 Pod 状态</td>
+<td><code>kubectl get pods -n redis-ha</code></td>
+<td>确认哪个 Pod 异常</td>
+</tr>
+<tr>
+<td>2. 查看日志</td>
+<td><code>kubectl logs redis-0 -n redis-ha</code></td>
+<td>最近日志</td>
+</tr>
+<tr>
+<td>3. 查看上一次日志</td>
+<td><code>kubectl logs redis-0 -n redis-ha --previous</code></td>
+<td>Pod 重启前的日志</td>
+</tr>
+<tr>
+<td>4. 查看 Events</td>
+<td><code>kubectl describe pod redis-0 -n redis-ha</code></td>
+<td>调度、拉镜像等问题</td>
+</tr>
+<tr>
+<td>5. 检查 PVC</td>
+<td><code>kubectl get pvc -n redis-ha</code></td>
+<td>存储是否正常</td>
+</tr>
+<tr>
+<td>6. 进入容器排查</td>
+<td><code>kubectl exec -it redis-0 -n redis-ha -- sh</code></td>
+<td>直接查看容器内部</td>
+</tr>
+<tr>
+<td>7. 检查 Service</td>
+<td><code>kubectl get svc -n redis-ha</code></td>
+<td>网络是否正常</td>
+</tr>
+<tr>
+<td>8. DNS 解析测试</td>
+<td><code>kubectl run -it dns-test --image=busybox:1.28 --rm -- nslookup redis-service.redis-ha.svc.cluster.local</code></td>
+<td>DNS 是否正常</td>
+</tr>
+</tbody>
+</table>
+<h3 id="主从复制故障">主从复制故障</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>步骤</th>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 查看复制状态</td>
+<td><code>redis-cli -a &lt;pw&gt; info replication</code></td>
+<td>确认角色和状态</td>
+</tr>
+<tr>
+<td>2. 检查连接</td>
+<td><code>redis-cli -a &lt;pw&gt; -h redis-1.redis-headless -p 6379 ping</code></td>
+<td>节点间连通性</td>
+</tr>
+<tr>
+<td>3. 检查密钥</td>
+<td><code>kubectl get secret redis-secret -n redis-ha -o yaml</code></td>
+<td>密码是否正确</td>
+</tr>
+<tr>
+<td>4. 手动重连</td>
+<td><code>redis-cli -a &lt;pw&gt; replicaof redis-0.redis-headless 6379</code></td>
+<td>手动建立主从</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sentinel-故障">Sentinel 故障</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>步骤</th>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. 检查 Sentinel</td>
+<td><code>redis-cli -p 26379 sentinel master mymaster</code></td>
+<td>当前 Master 信息</td>
+</tr>
+<tr>
+<td>2. 检查 quorum</td>
+<td><code>redis-cli -p 26379 sentinel ckquorum mymaster</code></td>
+<td>quorum 是否满足</td>
+</tr>
+<tr>
+<td>3. 重置 Sentinel</td>
+<td><code>redis-cli -p 26379 sentinel reset mymaster</code></td>
+<td>重置监控（慎用）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="传统运维-vs-k8s-云原生总结">8.3 传统运维 vs K8s
+云原生（总结）</h2>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 34%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr>
+<th>场景</th>
+<th>传统运维</th>
+<th>K8s 云原生</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>部署</td>
+<td>每台机器 yum install + 手动配置</td>
+<td><code>kubectl apply -f</code> 一键部署</td>
+</tr>
+<tr>
+<td>配置管理</td>
+<td>每台机器单独修改 redis.conf</td>
+<td>ConfigMap 一处修改，ConfigMap 更新后 Pod 需重启才生效</td>
+</tr>
+<tr>
+<td>高可用</td>
+<td>Keepalived + VIP 漂移</td>
+<td>Sentinel 自动故障转移</td>
+</tr>
+<tr>
+<td>监控</td>
+<td>手动脚本 + 告警不易扩展</td>
+<td>Prometheus Exporter + Grafana 开箱即用</td>
+</tr>
+<tr>
+<td>扩容</td>
+<td>手动安装 + 配置 + 加监控</td>
+<td>修改 replicas 即可</td>
+</tr>
+<tr>
+<td>故障恢复</td>
+<td>手动登录服务器排查</td>
+<td>Pod 自动重建，PVC 数据持久</td>
+</tr>
+<tr>
+<td>数据安全</td>
+<td>手动备份</td>
+<td>PVC 快照 + Longhorn 备份（升级选项）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="docker-desktop-k8s-常见问题">9. Docker Desktop K8s 常见问题</h1>
+<h3 id="q1-pod-一直-pendingpvc-未绑定">Q1: Pod 一直 Pending，PVC
+未绑定</h3>
+<div class="sourceCode" id="cb41"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 检查 StorageClass</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get storageclass</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 如果没有默认 SC，Docker Desktop 需 Reset Kubernetes Cluster</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Docker Desktop → Troubleshoot → Reset Kubernetes Cluster</span></span></code></pre></div>
+<h3 id="q2-imagepullbackoff">Q2: ImagePullBackOff</h3>
+<div class="sourceCode" id="cb42"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 查看详细原因</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> describe pod <span class="op">&lt;</span>pod-name<span class="op">&gt;</span> -n redis-ha</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 解决方法：</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 检查镜像是否已构建：docker images | grep redis</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 确保 imagePullPolicy 设为 IfNotPresent（本地镜像不用拉取）</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 检查镜像名和 tag 是否匹配</span></span></code></pre></div>
+<h3 id="q3-nodeport-访问不通">Q3: NodePort 访问不通</h3>
+<div class="sourceCode" id="cb43"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 确认 Service 的 NodePort</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> get svc redis-service <span class="at">-n</span> redis-ha</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 确认 NodePort 在 30000-32767 范围内</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 确认 Pod 已 Running</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Docker Desktop 有时 NodePort 不稳定</span></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 解决方法：Docker Desktop → Troubleshoot → Reset Kubernetes Cluster</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 或改用 port-forward：</span></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> port-forward svc/redis-service 6379:6379 <span class="at">-n</span> redis-ha</span></code></pre></div>
+<h3 id="q4-argo-cd-无法连接-gitlab">Q4: Argo CD 无法连接 GitLab</h3>
+<div class="sourceCode" id="cb44"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 测试 Argo CD repo-server 到 GitLab 的连通性</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> <span class="at">-n</span> argocd deploy/argocd-repo-server <span class="at">--</span> curl http://host.docker.internal:8080</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 如果 GitLab 和 K8s 都在 Docker Desktop 内</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co"># repoURL 使用：http://host.docker.internal:8080/root/redis-ha-k8s.git</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="co"># host.docker.internal 是 Docker 提供的访问宿主机的特殊 DNS</span></span></code></pre></div>
+<h3 id="q5-pod-调度失败资源不足">Q5: Pod 调度失败（资源不足）</h3>
+<div class="sourceCode" id="cb45"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 查看节点资源</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> describe nodes</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 解决方法：</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Docker Desktop → Settings → Resources → 增加 CPU/内存</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 删除不用的资源释放空间</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 清理已停止的容器和镜像：docker system prune -a</span></span></code></pre></div>
+<h3 id="q6-docker-desktop-k8s-环境重置">Q6: Docker Desktop K8s
+环境重置</h3>
+<div class="sourceCode" id="cb46"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 如果 K8s 集群出问题，重置方法：</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Docker Desktop → Settings → Kubernetes → Reset Kubernetes Cluster</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 等待重置完成</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 保持以下资源不丢：</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="co">#    - 代码和 YAML 文件（在 Git 里）</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="co">#    - Docker 镜像（本地构建的需重建）</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="co">#    - PV 数据（reset 后可能丢失，注意备份）</span></span></code></pre></div>
+<hr />
+<h1 id="附录课时安排">10. 附录：课时安排</h1>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>阶段</th>
+<th>内容</th>
+<th>课时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>环境准备</td>
+<td>Docker Desktop 安装配置、K8s 启用</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>K8s 基础</td>
+<td>Pod、Service、ConfigMap、Secret 实操</td>
+<td>1</td>
+</tr>
+<tr>
+<td>GitLab + CI</td>
+<td>GitLab 部署、仓库创建、CI 流水线</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Redis 上 K8s</td>
+<td>StatefulSet、Sentinel、主从复制</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Argo CD GitOps</td>
+<td>Argo CD 安装、Application、自动同步实验</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Prometheus 监控</td>
+<td>kube-prometheus-stack、Exporter、Grafana 仪表盘</td>
+<td>2</td>
+</tr>
+<tr>
+<td>故障演练</td>
+<td>Master 宕机、配置错误、SOP 流程</td>
+<td>2</td>
+</tr>
+<tr>
+<td>总结答疑</td>
+<td>回顾架构、传统 vs 云原生对比</td>
+<td>1.5</td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td></td>
+<td><strong>14</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="实验检查清单">实验检查清单</h2>
+<p>在实验结束前，确认以下各项：</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>能独立部署 Redis StatefulSet +
+Sentinel</label></li>
+<li><label><input type="checkbox"></input>理解 Headless Service 和 DNS
+稳定标识的作用</label></li>
+<li><label><input type="checkbox"></input>理解 Sentinel 的 quorum
+和故障转移机制</label></li>
+<li><label><input type="checkbox"></input>能在 Master 写入、Slave
+读取，验证主从复制</label></li>
+<li><label><input type="checkbox"></input>能通过 Argo CD
+自动部署和同步</label></li>
+<li><label><input type="checkbox"></input>能通过 Grafana 查看 Redis
+监控指标</label></li>
+<li><label><input type="checkbox"></input>能独立完成 Master
+宕机故障转移实验</label></li>
+<li><label><input type="checkbox"></input>掌握 kubectl
+常用命令和故障排查流程</label></li>
+</ul>
+<hr />
+<blockquote>
+<p><strong>v1.0 — Redis 高可用集群云原生化实验手册</strong> 基于 Windows
++ Docker Desktop Kubernetes 2026 年 7 月</p>
+</blockquote>
+<blockquote>
+<p><strong>本手册与传统运维的对应关系</strong>：</p>
+<ul>
+<li>Keepalived + VIP → Redis Sentinel 自动故障转移</li>
+<li>手动安装 Redis → Docker 镜像 + K8s StatefulSet</li>
+<li>散落配置文件 → ConfigMap 集中管理</li>
+<li>明文密码 → Secret 加密存储</li>
+<li>手动脚本监控 → Prometheus + Grafana</li>
+<li>scp 分发 + 手动部署 → Git + Argo CD GitOps</li>
+</ul>
+<p>通过本实验，你将理解 K8s 如何解决传统运维中的痛点，以及 Cloud Native
+架构的核心价值。</p>
+</blockquote>
+</body>
+</html>

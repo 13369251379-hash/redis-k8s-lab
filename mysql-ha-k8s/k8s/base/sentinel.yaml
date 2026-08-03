@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel
+  namespace: redis-ha
+spec:
+  replicas: 3               # 3 个 Sentinel，quorum=2
+  selector:
+    matchLabels:
+      app: sentinel
+  template:
+    metadata:
+      labels:
+        app: sentinel
+    spec:
+      affinity:
+        podAntiAffinity:    # Sentinel 尽量分散（单节点时降级为允许共存）
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: sentinel
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+      - name: init-sentinel
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        command:
+        - sh
+        - "-c"
+        - |
+          set -ex
+          cp /mnt/config/sentinel.conf /mnt/sentinel-config/sentinel.conf
+          echo "sentinel resolve-hostnames yes" >> /mnt/sentinel-config/sentinel.conf
+          echo "sentinel announce-hostnames yes" >> /mnt/sentinel-config/sentinel.conf
+        volumeMounts:
+        - name: sentinel-config
+          mountPath: /mnt/sentinel-config
+        - name: sentinel-config-template
+          mountPath: /mnt/config
+      containers:
+      - name: sentinel
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 26379
+          name: sentinel
+        command:
+        - redis-sentinel
+        - /mnt/sentinel-config/sentinel.conf
+        volumeMounts:
+        - name: sentinel-config
+          mountPath: /mnt/sentinel-config
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -p
+            - "26379"
+            - ping
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: sentinel-config-template
+        configMap:
+          name: redis-config
+          items:
+          - key: sentinel.conf
+            path: sentinel.conf
+      - name: sentinel-config
+        emptyDir: {}

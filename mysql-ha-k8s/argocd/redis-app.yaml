@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis-ha
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'http://gitlab.local/root/mysql-ha-k8s.git'   # Git 仓库地址
+    targetRevision: main
+    path: k8s/base                                          # 指向 K8s 资源目录
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: redis-ha
+  syncPolicy:
+    automated:
+      prune: true           # Git 中删除的文件，集群中也删除
+      selfHeal: true        # 集群中手动改的，自动回滚到 Git 状态
+    syncOptions:
+    - CreateNamespace=true  # 自动创建 namespace

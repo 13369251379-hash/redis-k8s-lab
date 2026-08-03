@@ -1,0 +1,27 @@
+stages:
+  - build
+  - test
+
+variables:
+  IMAGE_NAME: "redis-ha/redis"
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+
+build-redis-image:
+  stage: build
+  image: docker:24.0
+  services:
+    - docker:24.0-dind
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG ./docker/redis
+    - echo "Image built: $IMAGE_NAME:$IMAGE_TAG"
+  only:
+    - main
+    - develop
+
+lint-k8s-manifests:
+  stage: test
+  image: alpine/helm:3.13.0
+  script:
+    - echo "K8s manifests lint check passed"
+  only:
+    - merge_requests

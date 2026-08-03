@@ -1,0 +1,55 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: redis-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prom-stack
+spec:
+  groups:
+  - name: redis.rules
+    rules:
+    - alert: RedisDown
+      expr: redis_up == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Redis 实例宕机"
+        description: "Redis 实例 {{ $labels.instance }} 已下线超过 1 分钟"
+
+    - alert: RedisMasterDown
+      expr: redis_instance_info{role="master"} == 0
+      for: 30s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Redis Master 不可用"
+        description: "没有检测到 Redis Master，Sentinel 可能正在进行故障转移"
+
+    - alert: RedisTooManyConnections
+      expr: redis_connected_clients / redis_config_maxclients > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis 连接数过高"
+        description: "Redis 连接数超过 maxclients 的 80%"
+
+    - alert: RedisRejectedConnections
+      expr: rate(redis_rejected_connections_total[5m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis 拒绝连接"
+        description: "Redis 有被拒绝的连接，可能达到 maxclients 上限"
+
+    - alert: RedisMemoryHigh
+      expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Redis 内存使用率超过 80%"
+        description: "Redis 实例 {{ $labels.instance }} 内存使用率 {{ $value | humanizePercentage }}"
